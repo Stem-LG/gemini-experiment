@@ -1,0 +1,16 @@
+{
+    "name": "gemini-test",
+    "module": "index.ts",
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "start": "bun run index.ts"
+    },
+    "dependencies": {
+        "@google/generative-ai": "^0.21.0"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.7.2"
+    }
+}
