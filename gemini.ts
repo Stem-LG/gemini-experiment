@@ -16,6 +16,11 @@ interface FunctionDefinition {
   handler: (args: Record<string, unknown>) => Promise<object> | object;
 }
 
+interface MessageResponse {
+  message: string;
+  functionCalls: string[];
+}
+
 interface ChatGenerationConfig {
   temperature?: number;
   topP?: number;
@@ -89,17 +94,25 @@ class GeminiChat {
   }
 
   /** Let the model initialize the conversation */
-  async initialMessage(): Promise<string> {
+  async initialMessage(): Promise<MessageResponse> {
     return this.sendMessage(' ');
   }
 
-  async sendMessage(message: string): Promise<string> {
+  async sendMessage(message: string): Promise<MessageResponse> {
     try {
       let result = await this.chatSession.sendMessage(message);
+
+      let response = {
+        message: "",
+        functionCalls: [] as string[]
+      }
 
       let functionCalls = result.response.functionCalls();
 
       while (functionCalls) {
+
+        response.functionCalls.push(...functionCalls.map(call => call.name));
+
         const functionResponses: FunctionResponsePart[] = await Promise.all(
           functionCalls.map(async call => {
             try {
@@ -109,6 +122,7 @@ class GeminiChat {
               if (!fn) throw new Error(`Function ${call.name} not found`);
 
               const response = await Promise.resolve(fn.handler(call.args as Record<string, unknown>));
+
               return {
                 functionResponse: {
                   name: call.name,
@@ -131,9 +145,9 @@ class GeminiChat {
         functionCalls = result.response.functionCalls();
       }
 
-      const responseText = result.response.text();
+      response.message = result.response.text();
 
-      return responseText;
+      return response;
     } catch (error) {
       console.error('Error in sendMessage:', error);
       throw new Error('Failed to process message');
@@ -141,4 +155,10 @@ class GeminiChat {
   }
 }
 
-export { GeminiChat, type FunctionDefinition, type FunctionParameters, SchemaType };
+function logMessageResponse(response: MessageResponse) {
+  if (response.functionCalls.length)
+    console.log(`Function calls: ${response.functionCalls.join(", ")}`);
+  console.log(`Assistant: ${response.message}`);
+}
+
+export { GeminiChat, logMessageResponse, type FunctionDefinition, type FunctionParameters, SchemaType };

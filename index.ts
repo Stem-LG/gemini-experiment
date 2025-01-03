@@ -1,4 +1,4 @@
-import { GeminiChat, type FunctionDefinition, SchemaType } from "./gemini";
+import { GeminiChat, type FunctionDefinition, SchemaType, logMessageResponse } from "./gemini";
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -63,13 +63,13 @@ async function main() {
 
   const initialMessage = await chat.initialMessage();
 
-  console.log(`Assistant: ${initialMessage}`);
+  logMessageResponse(initialMessage);
 
   while (true) {
     const input = prompt("You: ") || "";
     if (input === "exit") break;
     const response = await chat.sendMessage(input);
-    console.log(`Assistant: ${response}`);
+    logMessageResponse(response);
   }
 
 }
